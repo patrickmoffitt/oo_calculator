@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <list>
+#include <tuple>
 #include <regex>
 
 using std::string;
@@ -15,14 +16,20 @@ using std::map;
 using std::regex;
 using std::function;
 using std::list;
+using std::tuple;
 
 class Infix_calculator {
 
 public:
-    explicit Infix_calculator(string equation);
+    explicit Infix_calculator(string equation, bool debug = false);
+
     string format();
+
     bool validate();
+
     double solve();
+
+    double compute();
 
 private:
     // Format
@@ -57,6 +64,7 @@ private:
     bool validate_balanced_parentheses();
 
     // Calculate
+    bool debug{false};
     string equation;
     list<char> operator_stack;
     list<double> value_stack;
@@ -69,5 +77,7 @@ private:
     static map<const char, const int> operator_precedence;
     void calculate();
     bool is_double(const string &token);
+    list<tuple<int, string>> parsed_equation;
+    void parse();
 };
 #endif //INC_9_CALCULATOR_CALCULATOR_H
