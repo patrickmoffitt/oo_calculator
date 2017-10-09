@@ -77,7 +77,15 @@ private:
     static map<const char, const int> operator_precedence;
     void calculate();
     bool is_double(const string &token);
-    list<tuple<int, string>> parsed_equation;
+    // These integers align to the outline used in compute(), e.g.; 123 means outline section 1.2.3.
+    enum token_type: int {
+        number              = 121,
+        variable            = 122,
+        left_parenthesis    = 123,
+        right_parenthesis   = 124,
+        arithmetic_operator = 125,
+    };
+    list<tuple<token_type, string>> parsed_equation;
     void parse();
 };
 #endif //INC_9_CALCULATOR_CALCULATOR_H

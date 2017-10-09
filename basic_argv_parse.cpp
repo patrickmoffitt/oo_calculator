@@ -9,7 +9,7 @@ char *Basic_argv_parse::get_option(char **begin, char **end, const std::string &
     if (itr != end && ++itr != end) {
         return *itr;
     }
-    return 0;
+    return nullptr;
 }
 
 bool Basic_argv_parse::option_exists(char **begin, char **end, const std::string &option) {

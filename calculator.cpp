@@ -223,14 +223,6 @@ bool Infix_calculator::is_double(const string &token) {
     return true;
 };
 
-enum token_type {
-    number              = 121,
-    variable            = 122,
-    left_parenthesis    = 123,
-    right_parenthesis   = 124,
-    arithmetic_operator = 125,
-};
-
 void Infix_calculator::parse() {
     parsed_equation.clear();
     string token;                      // Equation will be parsed into grammatical tokens.
