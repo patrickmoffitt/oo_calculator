@@ -44,10 +44,14 @@ private:
 
     static regex rgx_operator_sign;
     static regex rgx_digit_operator;
+    static regex rgx_only_sign;
     Infix_calculator &format_pad_operators();
 
     static regex rgx_parentheses;
     Infix_calculator &format_pad_parentheses();
+
+    static regex rgx_trim;
+    Infix_calculator &format_trim();
 
     static regex rgx_spaces;
     Infix_calculator &format_condense_spaces();

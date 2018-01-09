@@ -55,7 +55,7 @@ Infix_calculator &Infix_calculator::format_fix_divide() {
 }
 
 /*
- * TThe Mac OS Numbers application uses an alternate multiplication character. This function
+ * The Mac OS Numbers application uses an alternate multiplication character. This function
  * replaces it with '*'.
  */
 regex Infix_calculator::rgx_times_char(R"(×)");
@@ -68,10 +68,12 @@ Infix_calculator &Infix_calculator::format_fix_multiply() {
 // Make operators distinct from signs. -1+-1 becomes -1 + -1.
 regex Infix_calculator::rgx_operator_sign("([+\\-*\\/^])([+-]\\d+\\.?\\d*)");
 regex Infix_calculator::rgx_digit_operator("([\\d()])([+\\-*\\/^])");
+regex Infix_calculator::rgx_only_sign("(\\d\\s*)([+\\-])(\\s*\\d)");
 
 Infix_calculator &Infix_calculator::format_pad_operators() {
     equation = regex_replace(equation, rgx_operator_sign, "$1 $2");
     equation = regex_replace(equation, rgx_digit_operator, "$1 $2 ");
+    equation = regex_replace(equation, rgx_only_sign, "$1 $2 $3");
     return *this;
 }
 
@@ -80,6 +82,13 @@ regex Infix_calculator::rgx_parentheses("([()])");
 
 Infix_calculator &Infix_calculator::format_pad_parentheses() {
     equation = regex_replace(equation, rgx_parentheses, " $1 ");
+    return *this;
+}
+
+// Remove leading and trailing spaces.
+regex Infix_calculator::rgx_trim("^\\s|\\s$");
+Infix_calculator &Infix_calculator::format_trim() {
+    equation = regex_replace(equation, rgx_trim, "");
     return *this;
 }
 
@@ -262,7 +271,8 @@ string Infix_calculator::format() {
             .format_fix_multiply()
             .format_pad_operators()
             .format_pad_parentheses()
-            .format_condense_spaces();
+            .format_condense_spaces()
+            .format_trim();
     return equation;
 };
 
@@ -272,90 +282,12 @@ bool Infix_calculator::validate() {
            this->validate_balanced_parentheses();
 };
 
-double Infix_calculator::solve() {
-    string token;                      // Equation will be parsed into tokens.
-    char operator_;                    // operator is a reserved word.
-    const char *lp{"("};               // Left-Parenthesis.
-    const char *rp{")"};               // Right-Parenthesis.
-    double result{0.0};                // The solution to the equation.
-    string input{equation};
-    equation = format();
-    if (not validate()) {
-        debug ? cout << endl << equation << " Looks better than " << input << endl << endl : cout;
-        regex token_regex(R"(\S+)");
-        auto tokens_begin = sregex_iterator(equation.begin(), equation.end(), token_regex);
-        auto tokens_end = sregex_iterator();
-        // All algorithm credit to David Matuszek. U Penn CIT 594, 2002.
-        // 1. While there are still tokens to be read in,
-        for (sregex_iterator it = tokens_begin; it != tokens_end; ++it) {
-            std::smatch match = *it;
-            // 1.1 Get the next token.
-            token = match.str();
-            debug ? cout << "token: " << token << endl : cout;
-            // 1.2 If the token is:
-            // 1.2.1 A number: push it onto the value stack.
-            if (is_double(token)) {
-                value_stack.emplace_front(std::atof(token.c_str()));
-                debug ? cout << "Pushing " << token << " onto value stack. Size = "
-                             << int(value_stack.size()) << endl : cout;
-
-                // 1.2.2 A variable: get its value, and push onto the value stack. (Not implemented.)
-                // 1.2.3 A left parenthesis: push it onto the operator stack.
-            } else if (*token.c_str() == *lp) {
-                operator_stack.emplace_front(*token.c_str());
-                debug ? cout << "Pushing " << token << " onto operator stack. Size = "
-                             << int(operator_stack.size()) << endl : cout;
-                // 1.2.4 A right parenthesis:
-            } else if (*token.c_str() == *rp) {
-                // 1 While the thing on top of the operator stack is not a
-                //   left parenthesis,
-                while (operator_stack.front() != *lp) {
-                    calculate();
-                }
-                // 2 Pop the left parenthesis from the operator stack, and discard it.
-                operator_stack.pop_front();
-                // 1.2.5 An operator (call it operator_):
-            } else {
-                auto search = operators.find(*token.c_str());
-                if (search != operators.end()) {
-                    operator_ = *token.c_str();
-                    // 1 While the operator stack is not empty, and the top thing on the
-                    //   operator stack has the same or greater precedence as operator_,
-                    //   and that thing is not a left parenthesis:
-                    while (int(operator_stack.size()) > 0 and
-                           int(value_stack.size()) >= 2 and
-                           operator_precedence[operator_stack.front()]
-                           <= operator_precedence[operator_] and
-                           operator_stack.front() != *lp) {
-                        calculate();
-                    }
-                    // 2 Push operator_ onto the operator stack.
-                    operator_stack.emplace_front(operator_);
-                    debug ? cout << "Pushed " << operator_ << " onto the operator stack. Size = "
-                                 << int(operator_stack.size()) << endl : cout;
-                }
-            }
-        }
-        // 2. While the operator stack is not empty, calculate
-        while (int(operator_stack.size()) > 0) {
-            calculate();
-        }
-        // 3. At this point the operator stack should be empty, and the value
-        //    stack should have only one value in it, which is the final result.
-        result = value_stack.front();
-    } else {
-        auto err = std::make_error_condition(std::errc::invalid_argument);
-        throw std::invalid_argument(err.message());
-    }
-    return result;
-};
-
 double Infix_calculator::compute() {
     parse();
     char operator_;    // operator is a reserved word.
     // All algorithm credit to David Matuszek. U Penn CIT 594, 2002.
     // 1. While there are still tokens to be read in,
-    cout << endl << equation << endl;
+    debug ? cout << endl << equation << endl : cout;
     for (auto token : parsed_equation) {
         // 1.1 Get the next token.
         int type = static_cast<int>(std::get<0>(token));
@@ -419,3 +351,5 @@ double Infix_calculator::compute() {
     // only one value in it, which is the final result.
     return value_stack.front();
 }
+
+

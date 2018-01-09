@@ -34,20 +34,22 @@ int main(int argc, char * argv[]) {
             cerr << e.what() << endl;
             exit(e.code().value());
         }
+
     } else {
         // Interactive mode.
         string equation;              // The infix expression to solve.
-        double result{0.0};                // The solution to the equation.
-        std::cout << std::endl << "Enter an arithmetic equation in infix notation: " << endl;
+        double result{0.0};           // The solution to the equation.
+        cout << endl << "Press Enter to quit." << endl;
+        cout << "Enter an arithmetic equation in infix notation: ";
         while (getline(cin, equation) and equation.length() > 0) {
             Infix_calculator c{equation, infix_calculator_debug};
             result = c.compute();
-            cout << endl << c.format() << " = " << boost::format("%.4f") % result << endl;
+            cout << endl << c.format() << " = " << boost::format("%.4g") % result << endl;
+            cout << endl << "Enter an arithmetic equation in infix notation: ";
             // Start over.
             result = 0.0;
         }
     }
-
 
     return 0;
 }
